@@ -167,8 +167,8 @@ export default function App() {
             onToggleFullscreen={() => setFullscreen((v) => !v)}
           />
           <Controls
-            carousel={carousel}
             clips={clips}
+            activeIndex={carousel.activeIndex}
             onDeleteCurrent={onDeleteCurrent}
             onRoll={onRoll}
           />

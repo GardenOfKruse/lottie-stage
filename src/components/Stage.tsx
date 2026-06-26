@@ -28,16 +28,13 @@ type Props = {
  * cost less than the previous bug.
  */
 export function Stage({ clips, carousel, fullscreen = false, onToggleFullscreen }: Props) {
-  const { scrollValue, activeIndex, goTo, next, prev, onPointerDown } = carousel;
+  const { scrollValue, activeIndex, goTo, onPointerDown } = carousel;
 
+  // Only Escape does anything now that Prev/Next buttons and arrow-key
+  // navigation have been removed — the 🎲 Roll button is the only way
+  // to move the carousel (drag still works for fine-grained control).
   const onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      next();
-    } else if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      prev();
-    } else if (e.key === 'Escape' && fullscreen) {
+    if (e.key === 'Escape' && fullscreen) {
       e.preventDefault();
       onToggleFullscreen?.();
     }
