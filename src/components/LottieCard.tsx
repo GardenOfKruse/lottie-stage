@@ -17,8 +17,6 @@ type Props = {
   index: number;
   scrollValue: MotionValue<number>;
   isCenter: boolean;
-  /** True when this card is within the windowed mount range. */
-  mounted: boolean;
   /** Click handler from the stage: smooth-spring to this card. */
   onClick: () => void;
 };
@@ -31,7 +29,7 @@ type Props = {
  * the pure `cardStyle()` mapping to obtain the 3D transform values.
  * When `isCenter` flips we play or freeze the animation.
  */
-export function LottieCard({ clip, index, scrollValue, isCenter, mounted, onClick }: Props) {
+export function LottieCard({ clip, index, scrollValue, isCenter, onClick }: Props) {
   const offset = useTransform(scrollValue, (v) => index - v);
   const x = useTransform(offset, (o) => cardStyle(o).translateX);
   const rotateY = useTransform(offset, (o) => cardStyle(o).rotateY);
@@ -44,13 +42,13 @@ export function LottieCard({ clip, index, scrollValue, isCenter, mounted, onClic
   // Play only the centered card; everyone else shows frame 0.
   useEffect(() => {
     const api = lottieRef.current;
-    if (!api || !mounted) return;
+    if (!api) return;
     if (isCenter) {
       api.play();
     } else {
       api.goToAndStop(0, true);
     }
-  }, [isCenter, mounted]);
+  }, [isCenter]);
 
   // Compute metadata once per clip — it's cheap, and memoizing isn't worth
   // the hook overhead for four numbers.
@@ -68,17 +66,13 @@ export function LottieCard({ clip, index, scrollValue, isCenter, mounted, onClic
       onClick={onClick}
     >
       <div className={styles.inner}>
-        {mounted ? (
-          <LottiePlayer
-            lottieRef={lottieRef}
-            animationData={clip.data}
-            loop
-            autoplay={isCenter}
-            className={styles.lottie}
-          />
-        ) : (
-          <span className={styles.placeholder}>{clip.name}</span>
-        )}
+        <LottiePlayer
+          lottieRef={lottieRef}
+          animationData={clip.data}
+          loop
+          autoplay={isCenter}
+          className={styles.lottie}
+        />
         {metaLine && <div className={styles.meta}>{metaLine}</div>}
       </div>
     </motion.div>

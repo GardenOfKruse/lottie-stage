@@ -2,7 +2,6 @@ import type { KeyboardEvent } from 'react';
 import type { LottieClip } from '../types';
 import type { useCarousel } from '../hooks/useCarousel';
 import { LottieCard } from './LottieCard';
-import { VISIBLE_RANGE } from '../lib/geometry';
 import styles from './Stage.module.css';
 
 type Props = {
@@ -21,10 +20,12 @@ type Props = {
 /**
  * The 3D Cover Flow stage.
  *
- * Renders every clip with a real `LottieCard`, but only mounts the Lottie
- * renderer (an expensive `<canvas>`) for cards within `VISIBLE_RANGE` of
- * the active index. Far cards show their filename as a placeholder, which
- * keeps memory bounded when the user has uploaded dozens of animations.
+ * All clips are mounted as real Lottie players. Windowed mounting was
+ * removed in v0.6.1 because re-mounting an animation can crash lottie-web
+ * on certain JSON shapes (e.g. gradients with missing `s` stops) — the
+ * browser throws on the second mount even though the first render works.
+ * For the expected demo scale (≤ a few dozen clips) the extra canvases
+ * cost less than the previous bug.
  */
 export function Stage({ clips, carousel, fullscreen = false, onToggleFullscreen }: Props) {
   const { scrollValue, activeIndex, goTo, next, prev, onPointerDown } = carousel;
@@ -54,20 +55,16 @@ export function Stage({ clips, carousel, fullscreen = false, onToggleFullscreen 
       onKeyDown={onKeyDown}
       onDoubleClick={onToggleFullscreen}
     >
-      {clips.map((clip, index) => {
-        const mounted = Math.abs(index - activeIndex) <= VISIBLE_RANGE;
-        return (
-          <LottieCard
-            key={clip.id}
-            clip={clip}
-            index={index}
-            scrollValue={scrollValue}
-            isCenter={index === activeIndex}
-            mounted={mounted}
-            onClick={() => goTo(index)}
-          />
-        );
-      })}
+      {clips.map((clip, index) => (
+        <LottieCard
+          key={clip.id}
+          clip={clip}
+          index={index}
+          scrollValue={scrollValue}
+          isCenter={index === activeIndex}
+          onClick={() => goTo(index)}
+        />
+      ))}
     </div>
   );
 }
