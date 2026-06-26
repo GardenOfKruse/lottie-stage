@@ -1,7 +1,8 @@
 # Contributing
 
-Thanks for taking a look! This is a small demo, so the workflow is
-intentionally lightweight.
+Thanks for your interest in improving Lottie Stage! This is a small demo project — keep it simple.
+
+> 🇨🇳 中文版见 [README.zh-CN.md](./README.zh-CN.md)
 
 ## Running locally
 

@@ -1,6 +1,8 @@
 # Lottie Stage
 
-> A pure-frontend, 3D Cover Flow stage for browsing Lottie animations.
+> A pure-frontend, open-source 3D Cover Flow stage for Lottie animations.
+>
+> 🇨🇳 [中文文档](./README.zh-CN.md)
 
 Upload any number of Lottie JSON files and they appear on a glassy stage
 where the centered card plays while the neighbors tilt back, shrink and
