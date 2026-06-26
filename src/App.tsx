@@ -41,9 +41,10 @@ export default function App() {
   const carousel = useCarousel(clips.length);
   const [toast, setToast] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
-  const [dice, setDice] = useState<{ value: number; active: boolean }>({
+  const [dice, setDice] = useState<{ value: number; active: boolean; shaking: boolean }>({
     value: 1,
     active: false,
+    shaking: false,
   });
   // Hold the last completed roll so the user sees the result briefly after
   // the overlay fades out.
@@ -111,7 +112,7 @@ export default function App() {
    */
   const STEP_MS = 250;
   const SHAKE_MS = 650; // phase 1: dice ticks random faces
-  const RESULT_HOLD_MS = 800; // phase 2a: lock in the result; overlay hides immediately
+  const RESULT_HOLD_MS = 1000; // phase 2a: freeze on final face, overlay stays fully visible
   const RESULT_PAUSE_MS = 500; // phase 2b: a beat of silence after overlay fades
   const WRAP_PAUSE_MS = 800; // inserted between steps when the carousel wraps from last → first
 
@@ -130,32 +131,37 @@ export default function App() {
     clearPending();
     const start = Math.round(carousel.scrollValue.get());
     const value = rollDie();
-    setDice({ value, active: true });
+    setDice({ value, active: true, shaking: true });
     setLastResult(null);
 
-    // Phase 1: shake. At the end of the shake, lock the dice on the final
-    // face and immediately start fading out the overlay (CSS does the fade).
+    // Phase 1: shake. After SHAKE_MS, stop the dice ticking but keep
+    // the overlay fully visible (no fade-out yet) so the user has a
+    // full RESULT_HOLD_MS to read the final face.
     schedule(() => {
-      setDice((d) => ({ ...d, active: false }));
-      // Phase 2a: hold RESULT_HOLD_MS so the user reads the final face
-      // even while the overlay is still mid-fade-out.
-      // Phase 2b: then RESULT_PAUSE_MS more silence, then walk.
+      setDice((d) => ({ ...d, shaking: false }));
+      // Phase 2a: lock the face on screen for RESULT_HOLD_MS so the
+      // user actually sees the result before it disappears.
+      // Phase 2b: then fade out (active=false) and wait RESULT_PAUSE_MS
+      // before the carousel starts walking.
       schedule(() => {
-        jumper.start({
-          start,
-          steps: value,
-          intervalMs: STEP_MS,
-          count: clips.length,
-          // Pause longer BEFORE a wrap step so the user notices the
-          // "looping back to the beginning" beat. 800ms matches the
-          // post-shake hold so the rhythm is consistent.
-          intervalAfter: ({ nextWillWrap }) => (nextWillWrap ? WRAP_PAUSE_MS : STEP_MS),
-          onStep: (i) => snapTo(i),
-        });
-        // Stash the final result so the user sees it after the last step.
-        schedule(() => setLastResult(value), value * STEP_MS + 200);
-      }, RESULT_PAUSE_MS);
-    }, SHAKE_MS + RESULT_HOLD_MS);
+        setDice((d) => ({ ...d, active: false }));
+        schedule(() => {
+          jumper.start({
+            start,
+            steps: value,
+            intervalMs: STEP_MS,
+            count: clips.length,
+            // Pause longer BEFORE a wrap step so the user notices the
+            // "looping back to the beginning" beat. 800ms matches the
+            // post-shake hold so the rhythm is consistent.
+            intervalAfter: ({ nextWillWrap }) => (nextWillWrap ? WRAP_PAUSE_MS : STEP_MS),
+            onStep: (i) => snapTo(i),
+          });
+          // Stash the final result so the user sees it after the last step.
+          schedule(() => setLastResult(value), value * STEP_MS + 200);
+        }, RESULT_PAUSE_MS);
+      }, RESULT_HOLD_MS);
+    }, SHAKE_MS);
   };
 
   return (
@@ -186,7 +192,7 @@ export default function App() {
               <span className={styles.diceLabel}>Last roll: {lastResult}</span>
             )}
           </div>
-          <Dice value={dice.value} active={dice.active} />
+          <Dice value={dice.value} active={dice.active} shaking={dice.shaking} />
           {fullscreen && (
             <div style={{ textAlign: 'center', fontSize: 12, color: '#888', marginTop: -4 }}>
               Fullscreen — double-click the stage or press Esc to exit
