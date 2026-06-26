@@ -49,6 +49,15 @@ Open an issue with:
 
 ## Replacing the bundled samples
 
-The three files in `samples/` are LottieFiles *Free for Personal Use*
-assets. If you replace them, please update `samples/README.md` with the
-new source and license.
+The three files under `src/samples/` are LottieFiles *Free for Personal
+Use* assets. To change the default set:
+
+1. Replace one or more of the files in `src/samples/`.
+2. Edit `BUILTIN_SAMPLES` in `src/hooks/useLottieStore.ts` so the
+   filenames match the new files (the order in the array is the order
+   they appear on the stage).
+3. Clear your browser's IndexedDB and `localStorage` to re-seed:
+   the app only seeds once, gated on `localStorage.getItem('lottie-stage.seeded.v1')`.
+
+The source code is MIT-licensed; the bundled Lottie animations are
+licensed separately under LottieFiles *Free for Personal Use*.

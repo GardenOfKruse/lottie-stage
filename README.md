@@ -8,7 +8,8 @@ fade. Drag, swipe, click, or use the arrow keys to move between clips —
 the whole motion is driven by a single continuous value, so transitions
 feel like real glass instead of a tick-by-tick slideshow.
 
-> Drop the files from `./samples/` onto the page to see it in action.
+> The stage ships with three bundled Lottie animations as a default set.
+> Delete any of them and upload your own — they're just normal clips.
 
 ## Features
 
@@ -46,16 +47,18 @@ pnpm dev          # open http://127.0.0.1:5173/lottie-stage/
 
 ## Usage
 
-1. Open the app in your browser.
-2. Drop one or more `.json` files from `./samples/` (or anywhere on your
-   machine) onto the page, or click the dropzone to pick files.
-3. Drag / swipe the stage left and right to fan the cards. Lift your
+1. Open the app in your browser — three sample animations are already on
+   the stage so you have something to look at immediately.
+2. Drag / swipe the stage left and right to fan the cards. Lift your
    pointer anywhere — the nearest card snaps to center with a spring.
-4. Click any visible card to spring-center it.
-5. Use the `←` / `→` arrow keys when the stage is focused, or the
+3. Click any visible card to spring-center it.
+4. Use the `←` / `→` arrow keys when the stage is focused, or the
    Prev / Next buttons below the stage.
-6. Click **Delete** to remove the currently centered card.
-7. Reload the page — your clips are still there.
+5. Click **Delete** to remove the currently centered card. Once deleted,
+   it stays deleted across reloads — the bundled defaults are seeded
+   only on the very first visit.
+6. Drop additional `.json` files anywhere on the page (or click the
+   dropzone) to add your own. They'll persist in IndexedDB across reloads.
 
 ### Validation rules
 
@@ -106,20 +109,24 @@ src/
     Uploader.tsx      drag-and-drop / click-to-pick file input
   hooks/
     useCarousel.ts    scrollValue MotionValue, drag, spring, flick
-    useLottieStore.ts IndexedDB hydration + add/remove clips
+    useLottieStore.ts IndexedDB hydration + add/remove clips + first-run seed
   lib/
     db.ts             idb wrapper (getAllClips / addClip / deleteClip)
     geometry.ts       pure: offset → CardStyle
     lottie-validate.ts pure: isLottieData(unknown) → boolean
+  samples/            bundled Lottie JSON used as the first-run default set
   types.ts            LottieClip type
   App.tsx             composition root
-samples/              3 Lottie JSON files for the demo
 ```
 
-## License
+## Bundled samples
 
-The source code is released under the **MIT License** — see `LICENSE`.
-
-The bundled sample animations in `samples/` are from LottieFiles under
-their *Free for Personal Use* license; see `samples/README.md` before
-shipping the demo anywhere commercial.
+The three Lottie animations under `src/samples/` are the same files used
+by the companion-feature preset in the [timeshards](https://github.com/)
+project's pet module. They are LottieFiles *Free for Personal Use*
+assets, bundled as a default so the stage is never empty on first
+visit. They are seeded into IndexedDB **only on the very first visit**
+(guarded by a `localStorage` flag); from then on they behave like
+ordinary user clips — you can delete them and they stay deleted across
+reloads. For commercial use, replace them with Lottie files you have a
+license to ship.
