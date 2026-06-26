@@ -1,32 +1,125 @@
-# React + TypeScript + Vite
+# Lottie Stage
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+> A pure-frontend, 3D Cover Flow stage for browsing Lottie animations.
 
-Currently, two official plugins are available:
+Upload any number of Lottie JSON files and they appear on a glassy stage
+where the centered card plays while the neighbors tilt back, shrink and
+fade. Drag, swipe, click, or use the arrow keys to move between clips —
+the whole motion is driven by a single continuous value, so transitions
+feel like real glass instead of a tick-by-tick slideshow.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+> Drop the files from `./samples/` onto the page to see it in action.
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **3D Cover Flow** layout: centered card faces you, neighbors tilt at
+  45°, scale to 80%, and fade to 60% opacity.
+- **One motion value, infinite smoothness.** Every card's transform is
+  derived from `offset = index - scrollValue`, so dragging produces a
+  continuous fan with zero discrete jumps.
+- **Windowed rendering.** Only cards within `|offset| ≤ 2` mount a real
+  Lottie instance; further cards show their filename as a lightweight
+  placeholder. Sliding stays smooth even with dozens of clips.
+- **Center plays, rest freeze.** Only the active card runs its animation
+  loop. Neighbors snap to frame 0 as static previews.
+- **Multiple inputs.** Drag / touch swipe, click on any visible card,
+  arrow buttons, `←` / `→` keyboard, and release-velocity flick.
+- **IndexedDB persistence.** Uploaded clips survive a page reload.
+- **Drag-and-drop upload** with JSON validation and a 5 MB soft warning.
 
-## Expanding the Oxlint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+- React 19 + Vite 8 + TypeScript
+- [lottie-react](https://github.com/Gamote/lottie-react) for Lottie playback
+- [framer-motion](https://www.framer.com/motion/) for spring physics
+- [idb](https://github.com/jakearchibald/idb) as a thin IndexedDB wrapper
+- [Vitest](https://vitest.dev/) for the pure-function unit tests
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+No UI component library, no CSS framework, no backend.
+
+## Getting Started
+
+```bash
+pnpm install
+pnpm dev          # open http://127.0.0.1:5173/lottie-stage/
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Usage
+
+1. Open the app in your browser.
+2. Drop one or more `.json` files from `./samples/` (or anywhere on your
+   machine) onto the page, or click the dropzone to pick files.
+3. Drag / swipe the stage left and right to fan the cards. Lift your
+   pointer anywhere — the nearest card snaps to center with a spring.
+4. Click any visible card to spring-center it.
+5. Use the `←` / `→` arrow keys when the stage is focused, or the
+   Prev / Next buttons below the stage.
+6. Click **Delete** to remove the currently centered card.
+7. Reload the page — your clips are still there.
+
+### Validation rules
+
+A file is accepted as Lottie when it is a JSON object containing every
+required key (`v`, `layers`, `fr`, `ip`, `op`) and `layers` is an array.
+Anything else is skipped with a toast at the bottom of the page.
+
+## Build & Deploy
+
+```bash
+pnpm build        # produces dist/
+pnpm preview      # serve dist/ locally
+```
+
+A GitHub Pages workflow is included at
+`.github/workflows/deploy.yml`. On every push to `main` it builds the
+project and publishes `dist/` to GitHub Pages.
+
+**Important:** `vite.config.ts` sets `base: '/lottie-stage/'` to match
+the default repo name. If you fork or rename the repo, update this
+string to match the new path (e.g. `/your-fork-name/`) — otherwise
+asset URLs will resolve against the wrong origin on Pages.
+
+## Testing
+
+```bash
+pnpm test         # runs Vitest once
+pnpm test:watch   # watch mode
+```
+
+The current test suite covers the two pure-function modules:
+
+- `src/lib/geometry.ts` — offset → 3D transform mapping.
+- `src/lib/lottie-validate.ts` — JSON validation.
+
+UI components are deliberately not unit-tested; verify them by running
+`pnpm dev` and exercising the stage manually.
+
+## Project Structure
+
+```
+src/
+  components/         React components
+    Controls.tsx      prev / next / delete buttons
+    EmptyState.tsx    shown when zero clips
+    LottieCard.tsx    one card: 3D transform + Lottie playback
+    Stage.tsx         3D container with windowing + keyboard
+    Uploader.tsx      drag-and-drop / click-to-pick file input
+  hooks/
+    useCarousel.ts    scrollValue MotionValue, drag, spring, flick
+    useLottieStore.ts IndexedDB hydration + add/remove clips
+  lib/
+    db.ts             idb wrapper (getAllClips / addClip / deleteClip)
+    geometry.ts       pure: offset → CardStyle
+    lottie-validate.ts pure: isLottieData(unknown) → boolean
+  types.ts            LottieClip type
+  App.tsx             composition root
+samples/              3 Lottie JSON files for the demo
+```
+
+## License
+
+The source code is released under the **MIT License** — see `LICENSE`.
+
+The bundled sample animations in `samples/` are from LottieFiles under
+their *Free for Personal Use* license; see `samples/README.md` before
+shipping the demo anywhere commercial.

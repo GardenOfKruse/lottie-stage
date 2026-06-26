@@ -1,9 +1,15 @@
 import { useEffect, useRef } from 'react';
-import Lottie, { type LottieRefCurrentProps } from 'lottie-react';
+// lottie-react publishes the player as the module's `default` export; under
+// Vite's CJS interop the bare import can resolve to the namespace object.
+// Pick whichever shape we got so the JSX below always sees the component.
+import LottieModule, { type LottieRefCurrentProps } from 'lottie-react';
 import { motion, useTransform, type MotionValue } from 'framer-motion';
 import type { LottieClip } from '../types';
 import { cardStyle } from '../lib/geometry';
 import styles from './LottieCard.module.css';
+
+const LottiePlayer =
+  (LottieModule as unknown as { default?: typeof LottieModule }).default ?? LottieModule;
 
 type Props = {
   clip: LottieClip;
@@ -53,7 +59,7 @@ export function LottieCard({ clip, index, scrollValue, isCenter, mounted, onClic
       onClick={onClick}
     >
       {mounted ? (
-        <Lottie
+        <LottiePlayer
           lottieRef={lottieRef}
           animationData={clip.data}
           loop

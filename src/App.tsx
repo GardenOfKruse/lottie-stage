@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Component, useEffect, useState, type ReactNode } from 'react';
 import { useLottieStore } from './hooks/useLottieStore';
 import { useCarousel } from './hooks/useCarousel';
 import { Stage } from './components/Stage';
@@ -6,6 +6,23 @@ import { Uploader } from './components/Uploader';
 import { EmptyState } from './components/EmptyState';
 import { Controls } from './components/Controls';
 import styles from './App.module.css';
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { err: Error | null }> {
+  state = { err: null as Error | null };
+  static getDerivedStateFromError(err: Error) { return { err }; }
+  componentDidCatch(err: Error) { console.error('App crashed:', err); }
+  render() {
+    if (this.state.err) {
+      return (
+        <div style={{ padding: 24, color: '#f88', fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+          <h2>App crashed</h2>
+          <pre>{String(this.state.err.stack || this.state.err.message)}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 /**
  * App composition root.
@@ -33,6 +50,7 @@ export default function App() {
   };
 
   return (
+    <ErrorBoundary>
     <div className={styles.app}>
       <div className={styles.header}>
         <h1>Lottie Stage</h1>
@@ -52,5 +70,6 @@ export default function App() {
       )}
       {toast && <div className={styles.toast}>{toast}</div>}
     </div>
+    </ErrorBoundary>
   );
 }
