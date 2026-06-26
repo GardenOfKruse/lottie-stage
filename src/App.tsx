@@ -1,11 +1,14 @@
-import { Component, useEffect, useState, type ReactNode } from 'react';
+import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
+import { animate } from 'framer-motion';
 import { useLottieStore } from './hooks/useLottieStore';
 import { useCarousel } from './hooks/useCarousel';
+import { useStepJumper } from './hooks/useStepJumper';
 import { Stage } from './components/Stage';
 import { Uploader } from './components/Uploader';
 import { EmptyState } from './components/EmptyState';
 import { Controls } from './components/Controls';
 import { Dice } from './components/Dice';
+import { rollDie } from './lib/roll';
 import styles from './App.module.css';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { err: Error | null }> {
@@ -38,10 +41,37 @@ export default function App() {
   const carousel = useCarousel(clips.length);
   const [toast, setToast] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
-  const [dice, setDice] = useState<{ value: number; rolling: boolean }>({
+  const [dice, setDice] = useState<{ value: number; active: boolean }>({
     value: 1,
-    rolling: false,
+    active: false,
   });
+  // Hold the last completed roll so the user sees the result briefly after
+  // the overlay fades out.
+  const [lastResult, setLastResult] = useState<number | null>(null);
+
+  const jumper = useStepJumper();
+  // Track pending phase timers so we can cancel them if the user clicks
+  // Roll again before the previous animation finishes.
+  const pendingTimers = useRef<number[]>([]);
+  const clearPending = () => {
+    for (const t of pendingTimers.current) window.clearTimeout(t);
+    pendingTimers.current = [];
+  };
+  const schedule = (fn: () => void, ms: number) => {
+    const id = window.setTimeout(() => {
+      pendingTimers.current = pendingTimers.current.filter((t) => t !== id);
+      fn();
+    }, ms);
+    pendingTimers.current.push(id);
+    return id;
+  };
+  // Keep a stable handle to the carousel so the timeouts we schedule
+  // below always call the latest `goTo` even if the carousel re-inits.
+  const carouselRef = useRef(carousel);
+  carouselRef.current = carousel;
+
+  // Drop any pending timers if the app unmounts.
+  useEffect(() => () => clearPending(), []);
 
   // Auto-dismiss the toast after a short window.
   useEffect(() => {
@@ -66,13 +96,57 @@ export default function App() {
     if (clip) removeClip(clip.id);
   };
 
-  // Roll the dice, then stop the shake after a short delay so the user
-  // sees the dice "settle" on the value that was used for the jump.
+  /**
+   * Roll the dice in three phases:
+   *   1. shake   — overlay shows, dice ticks random faces (650 ms)
+   *   2. settle  — overlay hides, dice value is locked in
+   *   3. step    — one card swap per step, every STEP_MS, wrapping with mod
+   *
+   * Each step uses a snappy tween (not a soft spring) so the cards visibly
+   * click from position to position instead of gliding — that's what makes
+   * the dice roll feel like a board-game die across the stage.
+   *
+   * Each phase uses window.setTimeout so they queue even while a previous
+   * animation is still in flight.
+   */
+  const STEP_MS = 250;
+  const SHAKE_MS = 650;
+
+  /**
+   * Snap the carousel to a specific index without the soft spring —
+   * used by the dice step jumper so each step is a discrete click.
+   */
+  const snapTo = (i: number) => {
+    carousel.scrollValue.stop();
+    animate(carousel.scrollValue, i, { type: 'tween', duration: 0.18, ease: 'easeOut' });
+  };
+
   const onRoll = () => {
-    const result = carousel.roll();
-    if (!result) return;
-    setDice({ value: result.value, rolling: true });
-    window.setTimeout(() => setDice((d) => ({ ...d, rolling: false })), 650);
+    if (clips.length <= 1) return;
+    jumper.cancel();
+    clearPending();
+    const start = Math.round(carousel.scrollValue.get());
+    const value = rollDie();
+    setDice({ value, active: true });
+    setLastResult(null);
+
+    // Phase 1+2: settle the dice.
+    schedule(() => {
+      setDice((d) => ({ ...d, active: false }));
+      // Phase 3: start walking. The first step fires after STEP_MS so
+      // the user clearly sees the overlay fade out before motion begins.
+      schedule(() => {
+        jumper.start({
+          start,
+          steps: value,
+          intervalMs: STEP_MS,
+          count: clips.length,
+          onStep: (i) => snapTo(i),
+        });
+        // Stash the final result so the user sees it after the last step.
+        schedule(() => setLastResult(value), value * STEP_MS + 200);
+      }, STEP_MS);
+    }, SHAKE_MS);
   };
 
   return (
@@ -99,11 +173,11 @@ export default function App() {
             onRoll={onRoll}
           />
           <div className={styles.diceRow}>
-            <Dice value={dice.value} rolling={dice.rolling} />
-            <span className={styles.diceLabel}>
-              {dice.rolling ? 'Rolling…' : `Last roll: ${dice.value}`}
-            </span>
+            {lastResult !== null && !dice.active && (
+              <span className={styles.diceLabel}>Last roll: {lastResult}</span>
+            )}
           </div>
+          <Dice value={dice.value} active={dice.active} />
           {fullscreen && (
             <div style={{ textAlign: 'center', fontSize: 12, color: '#888', marginTop: -4 }}>
               Fullscreen — double-click the stage or press Esc to exit

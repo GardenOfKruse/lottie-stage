@@ -2,13 +2,6 @@ import { useEffect, useState } from 'react';
 import { rollDie } from '../lib/roll';
 import styles from './Dice.module.css';
 
-/**
- * Positions of the 9 cells on a 3x3 pip grid (0..8).
- * Layout:
- *   0 1 2
- *   3 4 5
- *   6 7 8
- */
 const PIP_GRID: Record<number, number[]> = {
   1: [4],
   2: [0, 8],
@@ -21,26 +14,23 @@ const PIP_GRID: Record<number, number[]> = {
 type Props = {
   /** Final value to display when the roll finishes (1..6). */
   value: number;
-  /** When true, the die shakes and cycles through random values. */
-  rolling: boolean;
+  /** When true the overlay is shown AND the dice shakes. */
+  active: boolean;
 };
 
 /**
- * A small dice overlay. Driven by two props:
- * - `rolling=true`  → the dice shakes and ticks through pseudo-random faces
- *                     every ~60ms.
- * - `rolling=false` → freezes on `value`.
+ * Full-screen dice overlay. Renders only while `active` is true; fades in
+ * via a CSS transition. While active it shakes and ticks through random
+ * faces; when it goes inactive it freezes on `value`.
  *
- * We deliberately keep the shake short (≤ 800ms) so the perceived lag
- * between click and arrival is small. The actual target-jump animation
- * is handled by `useCarousel` after `rollDie()` resolves.
+ * The overlay sits above every card (z-index 9999) and dims the rest of
+ * the page so the dice is unmistakably the focus.
  */
-export function Dice({ value, rolling }: Props) {
-  // While rolling we ignore `value` and show our own ticker.
+export function Dice({ value, active }: Props) {
   const [ticker, setTicker] = useState(value);
 
   useEffect(() => {
-    if (!rolling) {
+    if (!active) {
       setTicker(value);
       return;
     }
@@ -55,25 +45,33 @@ export function Dice({ value, rolling }: Props) {
       cancelled = true;
       clearInterval(id);
     };
-  }, [rolling, value]);
+  }, [active, value]);
 
-  const face = rolling ? ticker : value;
+  // Always render so the CSS transition runs both directions cleanly.
+  // Hide it via `visible` class — `display: none` would skip the fade.
+  const face = active ? ticker : value;
   const pips = PIP_GRID[face] ?? [];
 
   return (
     <div
-      className={`${styles.dice} ${rolling ? styles.shake : ''}`}
-      role="img"
-      aria-label={rolling ? 'Rolling' : `Rolled ${face}`}
-      data-face={face}
+      className={`${styles.overlay} ${active ? styles.visible : ''}`}
+      aria-hidden={!active}
+      data-testid="dice-overlay"
     >
-      {Array.from({ length: 9 }, (_, i) => (
-        <span
-          key={i}
-          className={styles.cell}
-          data-on={pips.includes(i) ? '1' : '0'}
-        />
-      ))}
+      <div
+        className={`${styles.dice} ${active ? styles.shake : ''}`}
+        role="img"
+        aria-label={active ? 'Rolling' : `Rolled ${face}`}
+        data-face={face}
+      >
+        {Array.from({ length: 9 }, (_, i) => (
+          <span
+            key={i}
+            className={styles.cell}
+            data-on={pips.includes(i) ? '1' : '0'}
+          />
+        ))}
+      </div>
     </div>
   );
 }
