@@ -36,6 +36,7 @@ export default function App() {
   const { clips, loading, addClips, removeClip } = useLottieStore();
   const carousel = useCarousel(clips.length);
   const [toast, setToast] = useState<string | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
 
   // Auto-dismiss the toast after a short window.
   useEffect(() => {
@@ -43,6 +44,17 @@ export default function App() {
     const t = setTimeout(() => setToast(null), 3000);
     return () => clearTimeout(t);
   }, [toast]);
+
+  // Global Escape exits fullscreen — much friendlier than requiring the
+  // user to focus the stage first.
+  useEffect(() => {
+    if (!fullscreen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFullscreen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [fullscreen]);
 
   const onDeleteCurrent = () => {
     const clip = clips[carousel.activeIndex];
@@ -60,12 +72,22 @@ export default function App() {
         <EmptyState />
       ) : (
         <>
-          <Stage clips={clips} carousel={carousel} />
+          <Stage
+            clips={clips}
+            carousel={carousel}
+            fullscreen={fullscreen}
+            onToggleFullscreen={() => setFullscreen((v) => !v)}
+          />
           <Controls
             carousel={carousel}
-            count={clips.length}
+            clips={clips}
             onDeleteCurrent={onDeleteCurrent}
           />
+          {fullscreen && (
+            <div style={{ textAlign: 'center', fontSize: 12, color: '#888', marginTop: -4 }}>
+              Fullscreen — double-click the stage or press Esc to exit
+            </div>
+          )}
         </>
       )}
       {toast && <div className={styles.toast}>{toast}</div>}

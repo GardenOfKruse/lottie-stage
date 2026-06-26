@@ -5,8 +5,14 @@
   min-height: 360px;
   perspective: 1200px;
   overflow: hidden;
-  /* Let vertical page scroll pass; we handle horizontal drag ourselves. */
-  touch-action: pan-y;
+  touch-action: pan-y; /* let vertical scroll pass; we handle horizontal */
   user-select: none;
   outline: none;
+  transition: height 0.35s ease, perspective 0.35s ease;
+}
+
+.fullscreen {
+  height: 85vh;
+  min-height: 520px;
+  perspective: 1500px;
 }

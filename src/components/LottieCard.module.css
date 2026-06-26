@@ -30,3 +30,25 @@
   width: 100%;
   height: 100%;
 }
+
+.inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.meta {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10px;
+  color: #888;
+  letter-spacing: 0.2px;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}

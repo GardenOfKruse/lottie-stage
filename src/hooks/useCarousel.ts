@@ -60,6 +60,18 @@ export function useCarousel(count: number) {
     [goTo, scrollValue],
   );
 
+  /**
+   * Spring to a random index. Avoids picking the currently-centered card
+   * so each press actually moves somewhere — feels alive on a 3-card stage.
+   */
+  const random = useCallback(() => {
+    if (maxIndex <= 0) return;
+    const current = Math.round(scrollValue.get());
+    let target = Math.floor(Math.random() * (maxIndex + 1));
+    if (target === current) target = (target + 1) % (maxIndex + 1);
+    goTo(target);
+  }, [goTo, maxIndex, scrollValue]);
+
   // Drag state lives in a ref so a pointer move doesn't trigger a render.
   const drag = useRef({
     startX: 0,
@@ -124,5 +136,5 @@ export function useCarousel(count: number) {
     [clamp, maxIndex, scrollValue],
   );
 
-  return { scrollValue, activeIndex, goTo, next, prev, onPointerDown };
+  return { scrollValue, activeIndex, goTo, next, prev, random, onPointerDown };
 }

@@ -18,10 +18,30 @@ import totoroWalk from '../samples/totoro-walk.json';
 
 const SEED_FLAG = 'lottie-stage.seeded.v1';
 
-const BUILTIN_SAMPLES: { name: string; data: object }[] = [
-  { name: 'cat-playing.json', data: catPlaying },
-  { name: 'doggie-walk.json', data: doggieWalk },
-  { name: 'totoro-walk.json', data: totoroWalk },
+/**
+ * The bundled samples. `sourceUrl` is the LottieFiles page for the asset
+ * — the 🔗 button in the controls bar jumps there in a new tab.
+ *
+ * Stable IDs (`builtin-*`) make first-visit seeding idempotent: if you
+ * ever blow away IndexedDB but the localStorage flag still says "seeded",
+ * you don't get duplicates on next reload.
+ */
+const BUILTIN_SAMPLES: { name: string; data: object; sourceUrl: string }[] = [
+  {
+    name: 'cat-playing.json',
+    data: catPlaying,
+    sourceUrl: 'https://lottiefiles.com/animations/cat-playing-cat-cat-with-cats-cat-cat-7W7tFoqJYY',
+  },
+  {
+    name: 'doggie-walk.json',
+    data: doggieWalk,
+    sourceUrl: 'https://lottiefiles.com/animations/doggie-walk-dog-walk-Y0VYvZKs47',
+  },
+  {
+    name: 'totoro-walk.json',
+    data: totoroWalk,
+    sourceUrl: 'https://lottiefiles.com/animations/totoro-walk-totoro-walk-cute-totoro-walk-AFaMQq6pqD',
+  },
 ];
 
 export function useLottieStore() {
@@ -41,6 +61,7 @@ export function useLottieStore() {
             name: s.name,
             data: s.data,
             createdAt: Date.now() + i,
+            sourceUrl: s.sourceUrl,
           }));
           for (const clip of seeded) await addClip(clip);
           localStorage.setItem(SEED_FLAG, '1');

@@ -12,6 +12,10 @@ type Props = {
    * motion value. `App` is responsible for calling `useCarousel` once.
    */
   carousel: ReturnType<typeof useCarousel>;
+  /** Fullscreen enlarges the stage and tightens perspective for an "immersive" feel. */
+  fullscreen?: boolean;
+  /** Called on double-click — typically toggles fullscreen mode. */
+  onToggleFullscreen?: () => void;
 };
 
 /**
@@ -22,7 +26,7 @@ type Props = {
  * the active index. Far cards show their filename as a placeholder, which
  * keeps memory bounded when the user has uploaded dozens of animations.
  */
-export function Stage({ clips, carousel }: Props) {
+export function Stage({ clips, carousel, fullscreen = false, onToggleFullscreen }: Props) {
   const { scrollValue, activeIndex, goTo, next, prev, onPointerDown } = carousel;
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -32,17 +36,23 @@ export function Stage({ clips, carousel }: Props) {
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
       prev();
+    } else if (e.key === 'Escape' && fullscreen) {
+      e.preventDefault();
+      onToggleFullscreen?.();
     }
   };
 
+  const className = fullscreen ? `${styles.stage} ${styles.fullscreen}` : styles.stage;
+
   return (
     <div
-      className={styles.stage}
+      className={className}
       role="listbox"
       aria-label="Lottie stage"
       tabIndex={0}
       onPointerDown={onPointerDown}
       onKeyDown={onKeyDown}
+      onDoubleClick={onToggleFullscreen}
     >
       {clips.map((clip, index) => {
         const mounted = Math.abs(index - activeIndex) <= VISIBLE_RANGE;

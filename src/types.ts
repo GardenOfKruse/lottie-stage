@@ -3,4 +3,6 @@ export type LottieClip = {
   name: string;
   data: object;
   createdAt: number;
+  /** Optional URL to the original asset page on LottieFiles or similar. */
+  sourceUrl?: string;
 };

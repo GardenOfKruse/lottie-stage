@@ -6,6 +6,7 @@ import LottieModule, { type LottieRefCurrentProps } from 'lottie-react';
 import { motion, useTransform, type MotionValue } from 'framer-motion';
 import type { LottieClip } from '../types';
 import { cardStyle } from '../lib/geometry';
+import { lottieMeta } from '../lib/lottie-meta';
 import styles from './LottieCard.module.css';
 
 const LottiePlayer =
@@ -51,6 +52,14 @@ export function LottieCard({ clip, index, scrollValue, isCenter, mounted, onClic
     }
   }, [isCenter, mounted]);
 
+  // Compute metadata once per clip — it's cheap, and memoizing isn't worth
+  // the hook overhead for four numbers.
+  const meta = lottieMeta(clip.data);
+  const metaLine =
+    meta.fps !== null
+      ? `${meta.fps}fps · ${meta.totalFrames}f · ${meta.durationSec?.toFixed(1)}s · ${meta.layerCount} layers`
+      : '';
+
   return (
     <motion.div
       className={styles.card}
@@ -58,17 +67,20 @@ export function LottieCard({ clip, index, scrollValue, isCenter, mounted, onClic
       data-index={index}
       onClick={onClick}
     >
-      {mounted ? (
-        <LottiePlayer
-          lottieRef={lottieRef}
-          animationData={clip.data}
-          loop
-          autoplay={isCenter}
-          className={styles.lottie}
-        />
-      ) : (
-        <span className={styles.placeholder}>{clip.name}</span>
-      )}
+      <div className={styles.inner}>
+        {mounted ? (
+          <LottiePlayer
+            lottieRef={lottieRef}
+            animationData={clip.data}
+            loop
+            autoplay={isCenter}
+            className={styles.lottie}
+          />
+        ) : (
+          <span className={styles.placeholder}>{clip.name}</span>
+        )}
+        {metaLine && <div className={styles.meta}>{metaLine}</div>}
+      </div>
     </motion.div>
   );
 }
