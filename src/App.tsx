@@ -5,6 +5,7 @@ import { Stage } from './components/Stage';
 import { Uploader } from './components/Uploader';
 import { EmptyState } from './components/EmptyState';
 import { Controls } from './components/Controls';
+import { Dice } from './components/Dice';
 import styles from './App.module.css';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { err: Error | null }> {
@@ -37,6 +38,10 @@ export default function App() {
   const carousel = useCarousel(clips.length);
   const [toast, setToast] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const [dice, setDice] = useState<{ value: number; rolling: boolean }>({
+    value: 1,
+    rolling: false,
+  });
 
   // Auto-dismiss the toast after a short window.
   useEffect(() => {
@@ -61,6 +66,15 @@ export default function App() {
     if (clip) removeClip(clip.id);
   };
 
+  // Roll the dice, then stop the shake after a short delay so the user
+  // sees the dice "settle" on the value that was used for the jump.
+  const onRoll = () => {
+    const result = carousel.roll();
+    if (!result) return;
+    setDice({ value: result.value, rolling: true });
+    window.setTimeout(() => setDice((d) => ({ ...d, rolling: false })), 650);
+  };
+
   return (
     <ErrorBoundary>
     <div className={styles.app}>
@@ -82,7 +96,14 @@ export default function App() {
             carousel={carousel}
             clips={clips}
             onDeleteCurrent={onDeleteCurrent}
+            onRoll={onRoll}
           />
+          <div className={styles.diceRow}>
+            <Dice value={dice.value} rolling={dice.rolling} />
+            <span className={styles.diceLabel}>
+              {dice.rolling ? 'Rolling…' : `Last roll: ${dice.value}`}
+            </span>
+          </div>
           {fullscreen && (
             <div style={{ textAlign: 'center', fontSize: 12, color: '#888', marginTop: -4 }}>
               Fullscreen — double-click the stage or press Esc to exit

@@ -7,12 +7,15 @@ export function Controls({
   carousel,
   clips,
   onDeleteCurrent,
+  onRoll,
 }: {
   carousel: ReturnType<typeof useCarousel>;
   clips: LottieClip[];
   onDeleteCurrent: () => void;
+  /** Called when the user clicks 🎲; the parent owns the dice animation. */
+  onRoll: () => void;
 }) {
-  const { activeIndex, next, prev, random } = carousel;
+  const { activeIndex, next, prev } = carousel;
   const current = clips[activeIndex];
   const count = clips.length;
   const hasSource = !!current?.sourceUrl;
@@ -32,8 +35,8 @@ export function Controls({
         ⬇ JSON
       </button>
 
-      <button className={styles.btn} onClick={random} disabled={count <= 1} aria-label="Jump to random clip">
-        🎲 Random
+      <button className={styles.btn} onClick={onRoll} disabled={count <= 1} aria-label="Roll the dice and jump forward">
+        🎲 Roll
       </button>
 
       <button

@@ -24,3 +24,17 @@
   z-index: 5000;
   pointer-events: none;
 }
+
+.diceRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 8px 0 4px;
+}
+
+.diceLabel {
+  font-size: 13px;
+  color: #aaa;
+  font-variant-numeric: tabular-nums;
+}

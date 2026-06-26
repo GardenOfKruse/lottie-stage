@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { animate, useMotionValue, useMotionValueEvent } from 'framer-motion';
 import { CARD_SPACING } from '../lib/geometry';
+import { rollDie, rollTarget } from '../lib/roll';
 
 /**
  * Cover Flow carousel state.
@@ -61,16 +62,20 @@ export function useCarousel(count: number) {
   );
 
   /**
-   * Spring to a random index. Avoids picking the currently-centered card
-   * so each press actually moves somewhere — feels alive on a 3-card stage.
+   * Roll a real 6-sided die, then spring forward by that many cards
+   * (wrapping with `(current + N) % count`). Returns the die value so the
+   * caller can drive a Dice overlay.
+   *
+   * No-op when there are fewer than two clips.
    */
-  const random = useCallback(() => {
-    if (maxIndex <= 0) return;
+  const roll = useCallback((): { value: number; target: number } | null => {
+    if (count <= 1) return null;
     const current = Math.round(scrollValue.get());
-    let target = Math.floor(Math.random() * (maxIndex + 1));
-    if (target === current) target = (target + 1) % (maxIndex + 1);
-    goTo(target);
-  }, [goTo, maxIndex, scrollValue]);
+    const value = rollDie();
+    const target = rollTarget(current, count, false, value);
+    animate(scrollValue, target, SPRING);
+    return { value, target };
+  }, [count, scrollValue]);
 
   // Drag state lives in a ref so a pointer move doesn't trigger a render.
   const drag = useRef({
@@ -136,5 +141,5 @@ export function useCarousel(count: number) {
     [clamp, maxIndex, scrollValue],
   );
 
-  return { scrollValue, activeIndex, goTo, next, prev, random, onPointerDown };
+  return { scrollValue, activeIndex, goTo, next, prev, roll, onPointerDown };
 }
