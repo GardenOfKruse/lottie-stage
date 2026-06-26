@@ -110,7 +110,9 @@ export default function App() {
    * animation is still in flight.
    */
   const STEP_MS = 250;
-  const SHAKE_MS = 650;
+  const SHAKE_MS = 650; // phase 1: dice ticks random faces
+  const RESULT_HOLD_MS = 800; // phase 2a: lock in the result; overlay hides immediately
+  const RESULT_PAUSE_MS = 500; // phase 2b: a beat of silence after overlay fades
 
   /**
    * Snap the carousel to a specific index without the soft spring —
@@ -130,11 +132,13 @@ export default function App() {
     setDice({ value, active: true });
     setLastResult(null);
 
-    // Phase 1+2: settle the dice.
+    // Phase 1: shake. At the end of the shake, lock the dice on the final
+    // face and immediately start fading out the overlay (CSS does the fade).
     schedule(() => {
       setDice((d) => ({ ...d, active: false }));
-      // Phase 3: start walking. The first step fires after STEP_MS so
-      // the user clearly sees the overlay fade out before motion begins.
+      // Phase 2a: hold RESULT_HOLD_MS so the user reads the final face
+      // even while the overlay is still mid-fade-out.
+      // Phase 2b: then RESULT_PAUSE_MS more silence, then walk.
       schedule(() => {
         jumper.start({
           start,
@@ -145,8 +149,8 @@ export default function App() {
         });
         // Stash the final result so the user sees it after the last step.
         schedule(() => setLastResult(value), value * STEP_MS + 200);
-      }, STEP_MS);
-    }, SHAKE_MS);
+      }, RESULT_PAUSE_MS);
+    }, SHAKE_MS + RESULT_HOLD_MS);
   };
 
   return (
