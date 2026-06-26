@@ -1,0 +1,12 @@
+.stage {
+  position: relative;
+  width: 100%;
+  height: 60vh;
+  min-height: 360px;
+  perspective: 1200px;
+  overflow: hidden;
+  /* Let vertical page scroll pass; we handle horizontal drag ourselves. */
+  touch-action: pan-y;
+  user-select: none;
+  outline: none;
+}

@@ -12,6 +12,8 @@ type Props = {
   isCenter: boolean;
   /** True when this card is within the windowed mount range. */
   mounted: boolean;
+  /** Click handler from the stage: smooth-spring to this card. */
+  onClick: () => void;
 };
 
 /**
@@ -22,7 +24,7 @@ type Props = {
  * the pure `cardStyle()` mapping to obtain the 3D transform values.
  * When `isCenter` flips we play or freeze the animation.
  */
-export function LottieCard({ clip, index, scrollValue, isCenter, mounted }: Props) {
+export function LottieCard({ clip, index, scrollValue, isCenter, mounted, onClick }: Props) {
   const offset = useTransform(scrollValue, (v) => index - v);
   const x = useTransform(offset, (o) => cardStyle(o).translateX);
   const rotateY = useTransform(offset, (o) => cardStyle(o).rotateY);
@@ -48,6 +50,7 @@ export function LottieCard({ clip, index, scrollValue, isCenter, mounted }: Prop
       className={styles.card}
       style={{ x, rotateY, scale, opacity, zIndex }}
       data-index={index}
+      onClick={onClick}
     >
       {mounted ? (
         <Lottie
