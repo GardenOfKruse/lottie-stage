@@ -113,6 +113,7 @@ export default function App() {
   const SHAKE_MS = 650; // phase 1: dice ticks random faces
   const RESULT_HOLD_MS = 800; // phase 2a: lock in the result; overlay hides immediately
   const RESULT_PAUSE_MS = 500; // phase 2b: a beat of silence after overlay fades
+  const WRAP_PAUSE_MS = 800; // inserted between steps when the carousel wraps from last → first
 
   /**
    * Snap the carousel to a specific index without the soft spring —
@@ -145,6 +146,10 @@ export default function App() {
           steps: value,
           intervalMs: STEP_MS,
           count: clips.length,
+          // Pause longer BEFORE a wrap step so the user notices the
+          // "looping back to the beginning" beat. 800ms matches the
+          // post-shake hold so the rhythm is consistent.
+          intervalAfter: ({ nextWillWrap }) => (nextWillWrap ? WRAP_PAUSE_MS : STEP_MS),
           onStep: (i) => snapTo(i),
         });
         // Stash the final result so the user sees it after the last step.
